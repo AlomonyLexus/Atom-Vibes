@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Homeroom - การ์ดเปิดใจ</title>
+    <!-- โหลด Font Kanit จาก Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- โหลด Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- ตั้งค่า Tailwind และ Custom CSS -->
+    <style>
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #fff7ed; /* orange-50 */
+            background-image: radial-gradient(circle at top right, #ffedd5, transparent),
+                              radial-gradient(circle at bottom left, #fed7aa, transparent);
+            min-height: 100vh;
+            overflow: hidden; /* ป้องกันการเลื่อนหน้าจอที่ไม่จำเป็นบนมือถือ */
+        }
+
+        /* แอนิเมชันสำหรับพลิกการ์ด */
+        .card-container {
+            perspective: 1000px;
+        }
+
+        .card-inner {
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        .flip .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+        }
+
+        /* แอนิเมชันการปรากฏตัว */
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ซ่อน Element */
+        .hidden-view {
+            display: none !important;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center text-gray-800 antialiased relative">
+
+    <!-- รูปแบบตกแต่งฉากหลัง -->
+    <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute -top-20 -left-20 w-64 h-64 bg-orange-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+        <div class="absolute top-1/2 -right-20 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+        <div class="absolute -bottom-32 left-1/2 w-80 h-80 bg-orange-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
+    </div>
+
+    <!-- 1. หน้าแรก (Landing View) -->
+    <div id="home-view" class="w-full max-w-md px-6 flex flex-col items-center text-center fade-in">
+        <div class="bg-white/50 backdrop-blur-sm p-8 rounded-[3rem] shadow-xl border border-orange-100 w-full">
+            <!-- ไอคอนตกแต่ง -->
+            <div class="mb-6 flex justify-center space-x-2">
+                <span class="text-4xl text-orange-500">🧡</span>
+                <span class="text-4xl text-yellow-400">✨</span>
+            </div>
+            
+            <h1 class="text-4xl font-bold text-orange-600 mb-2 leading-tight">Homeroom</h1>
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">การ์ดเปิดใจ</h2>
+            
+            <div class="inline-block bg-orange-100 text-orange-800 px-4 py-1.5 rounded-full text-sm font-medium mb-8">
+                พื้นที่ปลอดภัย • รับฟัง ไม่ตัดสิน
+            </div>
+            
+            <p class="text-gray-600 mb-8 text-sm">
+                เลือกการ์ด 1 ใบ เพื่อเริ่มบทสนทนาและเชื่อมโยงความรู้สึกกับเพื่อนๆ หรือคนรอบข้าง
+            </p>
+
+            <button onclick="startDrawing()" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-xl py-4 px-8 rounded-2xl shadow-lg transform transition hover:scale-105 active:scale-95 flex justify-center items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                สุ่มการ์ดเลย!
+            </button>
+        </div>
+    </div>
+
+    <!-- 2. หน้าเปิดการ์ด (Card View) -->
+    <div id="card-view" class="w-full max-w-md px-6 flex flex-col items-center hidden-view">
+        
+        <!-- ตัวการ์ด (มี Effect พลิก) -->
+        <div class="card-container w-full aspect-[3/4] max-h-[60vh] mb-8" id="card-container">
+            <div class="card-inner relative w-full h-full shadow-2xl rounded-3xl cursor-pointer" id="card-inner" onclick="drawNewCard()">
+                
+                <!-- ด้านหลังการ์ด (ลายการ์ดที่ยังไม่เปิด) -->
+                <div class="card-front bg-gradient-to-br from-orange-400 to-orange-600 rounded-3xl border-4 border-orange-200 flex flex-col items-center justify-center p-6 shadow-[inset_0_0_20px_rgba(0,0,0,0.1)]">
+                    <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mb-4">
+                        <span class="text-5xl">🧡</span>
+                    </div>
+                    <h3 class="text-white font-bold text-2xl tracking-wide opacity-90">Deep Talk</h3>
+                    <p class="text-orange-100 text-sm mt-2 opacity-80">แตะเพื่อเปิดการ์ด</p>
+                </div>
+
+                <!-- ด้านหน้าการ์ด (แสดงคำถาม) -->
+                <div class="card-back bg-white rounded-3xl border-4 border-orange-400 flex flex-col items-center justify-center p-8 text-center relative overflow-hidden">
+                    <!-- ตกแต่งมุมการ์ด -->
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-orange-100 rounded-bl-full -mr-4 -mt-4"></div>
+                    <div class="absolute bottom-0 left-0 w-20 h-20 bg-amber-100 rounded-tr-full -ml-4 -mb-4"></div>
+                    
+                    <span class="text-orange-300 text-4xl mb-4 relative z-10">❝</span>
+                    <p id="question-text" class="text-2xl md:text-3xl font-medium text-gray-800 leading-snug relative z-10 break-words w-full">
+                        <!-- คำถามจะถูกแทรกที่นี่ -->
+                    </p>
+                    <span class="text-orange-300 text-4xl mt-4 relative z-10 rotate-180">❝</span>
+                    
+                    <div class="absolute bottom-4 text-xs text-gray-400 font-light tracking-wider">
+                        พื้นที่ปลอดภัย • รับฟัง ไม่ตัดสิน
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ปุ่มควบคุม -->
+        <div class="flex w-full gap-4 mt-2 fade-in delay-500">
+            <button onclick="goHome()" class="flex-1 bg-white border-2 border-orange-200 text-orange-600 font-semibold py-3 px-4 rounded-xl shadow-sm hover:bg-orange-50 active:bg-orange-100 transition flex justify-center items-center">
+                กลับหน้าแรก
+            </button>
+            <button onclick="drawNewCard()" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-4 rounded-xl shadow-md active:bg-orange-700 transition flex justify-center items-center">
+                สุ่มคำถามใหม่
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // ฐานข้อมูลคำถาม 30 ข้อ
+        const questions = [
+            "เรื่องเล็กๆ เรื่องไหนที่ทำให้เธอแอบยิ้มได้ในสัปดาห์นี้?",
+            "ถ้าให้เปรียบเทียบใจตัวเองตอนนี้เป็นสภาพอากาศ คิดว่าเป็นสภาพอากาศแบบไหน?",
+            "อะไรคือเรื่องที่กินพลังชีวิตเธอไปเยอะที่สุดในช่วง 2-3 วันที่ผ่านมา?",
+            "ความสุขง่ายๆ ในเช้าวันนี้ของเธอคืออะไร?",
+            "ถ้ามีเวลา 1 นาที ให้คนอื่นรับฟังโดยไม่ตัดสิน เธออยากระบายหรือบอกอะไร?",
+            "อะไรคือสิ่งที่เธอรู้สึกว่า 'อยากทำแต่ยังไม่มีเวลาทำสักที'?",
+            "ถ้าเธอสามารถย้ายไปอยู่ที่ไหนก็ได้ในสัปดาห์นี้ เธออยากไปอยู่ที่ไหน?",
+            "ตอนนี้เธอคิดว่าตัวเองกำลังพยายามสู้กับเรื่องอะไรอยู่หรือเปล่า?",
+            "สิ่งแรกที่เธออยากทำหลังจากเลิกเรียนหรือกลับถึงบ้านวันนี้คืออะไร?",
+            "เพลงไหนหรือคำพูดไหนที่ช่วยฮีลใจเธอได้ดีที่สุดในช่วงนี้?",
+            "ถ้าให้ส่งพลังใจให้เพื่อนข้างๆ ตอนนี้ อยากบอกอะไรเขา?",
+            "คุณลักษณะแบบไหนในตัวเพื่อนที่ทำให้เธอรู้สึกอุ่นใจเวลาอยู่ใกล้ๆ?",
+            "เคยมีใครทำอะไรเล็กๆ น้อยๆ ให้แล้วเธอรู้สึกขอบคุณมาก แต่ยังไม่มีโอกาสได้บอกไหม?",
+            "เวลาที่เหนื่อยหรือท้อ เธออยากได้รับการดูแลหรือปลอบโยนแบบไหนมากที่สุด?",
+            "เรื่องอะไรที่เธออยากให้คนในครอบครัวหรือคนรอบข้างเข้าใจเธอมากกว่านี้?",
+            "สิ่งที่เธอให้ความสำคัญมากที่สุดในการเป็น 'เพื่อน' คืออะไร?",
+            "เธอชอบตัวเองตอนอยู่กับใครมากที่สุด เพราะอะไร?",
+            "เคยรู้สึกโดดเดี่ยวท่ามกลางผู้คนบ้างไหม? ตอนนั้นเธอผ่านมันมาได้อย่างไร?",
+            "คำพูดไหนจากเพื่อนหรือครูที่เธอได้ยินแล้วรู้สึกว่าใจฟูที่สุด?",
+            "ถ้าสามารถส่งข้อความสั้นๆ ไปให้ตัวเองในอีก 5 ปีข้างหน้าได้ อยากบอกอะไร?",
+            "อะไรคือความเหนื่อยที่เธออยากให้คนอื่นเข้าใจมากที่สุดตอนนี้?",
+            "เธอภูมิใจในตัวเองเรื่องอะไรมากที่สุด?",
+            "ข้อดีหรือจุดแข็งของตัวเธอที่เธออยากให้คนอื่นมองเห็นคืออะไร?",
+            "วันที่แย่ที่สุดของเธอ จะดีขึ้นได้ทันทีถ้ามีสิ่งนี้... สิ่งนั้นคืออะไร?",
+            "ความฝันเล็กๆ หรือเป้าหมายระยะสั้นที่อยากทำให้สำเร็จในเดือนนี้คืออะไร?",
+            "บทเรียนที่ยากที่สุดที่เธอเคยได้เรียนรู้จากการทำผิดพลาดคืออะไร?",
+            "ถ้าเธอมี 'ปุ่มวิเศษ' ที่สามารถขจัดความกังวลออกไปได้หนึ่งเรื่อง เธอจะขจัดเรื่องอะไร?",
+            "เธอคิดว่าสังคมหรือโรงเรียนแบบไหนที่จะช่วยให้เธอเติบโตได้อย่างสบายใจที่สุด?",
+            "นิยามคำว่า 'ความสำเร็จ' ของเธอในตอนนี้คืออะไร?",
+            "หากเพื่อนข้างๆ กำลังรู้สึกเศร้า เธออยากบอกเขาคำว่าอะไรที่ธรรมดาแต่จริงใจที่สุด?"
+        ];
+
+        let availableQuestions = [...questions];
+
+        const homeView = document.getElementById('home-view');
+        const cardView = document.getElementById('card-view');
+        const cardContainer = document.getElementById('card-container');
+        const questionText = document.getElementById('question-text');
+
+        // ฟังก์ชันเริ่มสุ่มการ์ดจากหน้าแรก
+        function startDrawing() {
+            // ซ่อนหน้าแรก แสดงหน้าการ์ด
+            homeView.classList.add('hidden-view');
+            cardView.classList.remove('hidden-view');
+            
+            // รีเซ็ตสถานะการ์ดให้คว่ำอยู่
+            cardContainer.classList.remove('flip');
+            
+            // สุ่มคำถามมารอไว้ล่วงหน้า
+            setRandomQuestion();
+
+            // ให้การ์ดพลิกอัตโนมัติหลังจากเปิดหน้านี้สักพักสั้นๆ
+            setTimeout(() => {
+                cardContainer.classList.add('flip');
+            }, 300);
+        }
+
+        // ฟังก์ชันสุ่มคำถามใหม่
+        function drawNewCard() {
+            // ถ้าการ์ดหงายอยู่ ให้คว่ำการ์ดลงก่อน
+            if (cardContainer.classList.contains('flip')) {
+                cardContainer.classList.remove('flip');
+                
+                // รอให้การ์ดคว่ำเสร็จ (0.6s) แล้วเปลี่ยนคำถาม จากนั้นพลิกกลับขึ้นมาใหม่
+                setTimeout(() => {
+                    setRandomQuestion();
+                    cardContainer.classList.add('flip');
+                }, 600);
+            } else {
+                // ถ้าการ์ดคว่ำอยู่ (กรณีบั๊กหรือผู้ใช้กดเร็ว) ก็เปลี่ยนคำถามและพลิกเลย
+                setRandomQuestion();
+                cardContainer.classList.add('flip');
+            }
+        }
+
+        // ฟังก์ชันจัดการตรรกะการสุ่มคำถาม
+        function setRandomQuestion() {
+            // ถ้ารันคำถามครบแล้ว ให้รีเซ็ตใหม่
+            if (availableQuestions.length === 0) {
+                availableQuestions = [...questions];
+            }
+
+            // สุ่ม Index
+            const randomIndex = Math.floor(Math.random() * availableQuestions.length);
+            
+            // ดึงคำถามออกมาและลบออกจาก array ชั่วคราวเพื่อไม่ให้ซ้ำติดๆ กัน
+            const selectedQuestion = availableQuestions.splice(randomIndex, 1)[0];
+            
+            // ใส่ข้อความลงในการ์ด
+            questionText.textContent = selectedQuestion;
+        }
+
+        // ฟังก์ชันกลับหน้าแรก
+        function goHome() {
+            // คว่ำการ์ดกลับ
+            cardContainer.classList.remove('flip');
+            
+            // รอแอนิเมชันนิดหน่อยก่อนสลับหน้า
+            setTimeout(() => {
+                cardView.classList.add('hidden-view');
+                homeView.classList.remove('hidden-view');
+            }, 300);
+        }
+    </script>
+</body>
+</html>
